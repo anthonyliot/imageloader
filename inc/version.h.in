@@ -1,0 +1,60 @@
+/*
+ * version.h
+ *
+ * This is an auto generated file <${TODAY}>.
+ *
+ */
+
+#ifndef __IMAGES_VERSION_H__
+#define __IMAGES_VERSION_H__
+
+#define IMAGES_VERSION "@VERSION_STR_FULL@"
+
+///
+///
+///
+class ImagesVersion {
+
+public:
+    ///
+    /// \brief Current version major.minor.patch
+    ///
+    static inline std::string version() { return "@VERSION_STR@"; }
+
+    ///
+    /// \brief Current version major.minor.patchtweak.ahead+sha
+    ///
+    static inline std::string version_long() { return "@VERSION_STR_FULL@"; }
+
+    ///
+    /// \brief Current version in hexadecimal value
+    ///
+    static inline const int version_hex() { return @VERSION_HEX@; }
+
+    ///
+    /// \brief First digit of the version X.0
+    ///
+    static inline const int version_major() { return @VERSION_MAJOR@; }
+
+    ///
+    /// \brief Second digit of the version 0.X
+    ///
+    static inline const int version_minor() { return @VERSION_MINOR@; }
+
+    ///
+    /// \brief Current git sha version with 9 characters
+    ///
+    static inline std::string version_sha() { return "@VERSION_GIT_SHA@"; }
+
+    ///
+    /// \brief Current git branch name
+    ///
+    static inline std::string version_name() { return "@VERSION_NAME@"; }
+
+    ///
+    /// \brief Current date of the version with %Y/%m/%d %H:%M
+    ///
+    static inline std::string version_date() { return "@TODAY@"; }
+};
+
+#endif /* __IMAGES_VERSION_H__ */
