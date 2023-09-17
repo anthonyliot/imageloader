@@ -28,48 +28,38 @@ SET(Python_USERBASEBIN
 
 FIND_PROGRAM(conan_EXECUTABLE conan PATH ${Python_USERBASE}/bin)
 
-# EXECUTE_PROCESS(
-#     COMMAND ${conan_EXECUTABLE} remote list
-#     OUTPUT_VARIABLE output
-#     RESULT_VARIABLE result
-# )
+EXECUTE_PROCESS(
+    COMMAND ${conan_EXECUTABLE} remote list
+    OUTPUT_VARIABLE output
+    RESULT_VARIABLE result
+)
 
-# IF(result)
-#     ERROR("Failed to execute 'conan remote list' command")
-# ENDIF()
+IF(result)
+    ERROR("Failed to execute 'conan remote list' command")
+ENDIF()
 
-# STRING(REPLACE "\n" ";" output ${output})
+STRING(REPLACE "\n" ";" output ${output})
 
-# FOREACH(line ${output})
-#     STRING(REGEX MATCH "bincrafters" found ${line})
-#     IF(found)
-#         SET(remote_found TRUE)
-#     ENDIF()
-# ENDFOREACH()
+FOREACH(line ${output})
+    STRING(REGEX MATCH "bincrafters" found ${line})
+    IF(found)
+        SET(remote_found TRUE)
+    ENDIF()
+ENDFOREACH()
 
-# IF(NOT remote_found)
-#     EXECUTE_PROCESS(
-#         COMMAND ${conan_EXECUTABLE} remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-#         OUTPUT_VARIABLE output
-#         RESULT_VARIABLE result
-#     )
+IF(NOT remote_found)
+    EXECUTE_PROCESS(
+        COMMAND ${conan_EXECUTABLE} remote add bincrafters https://bincrafters.jfrog.io/artifactory/api/conan/public-conan
+        OUTPUT_VARIABLE output
+        RESULT_VARIABLE result
+    )
 
-#     IF(result)
-#         MESSAGE(ERROR "Failed to execute 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan' command")
-#     ENDIF()
-# ENDIF()
-
+    IF(result)
+        MESSAGE(ERROR "Failed to execute 'conan remote add bincrafters https://bincrafters.jfrog.io/artifactory/api/conan/public-conan' command")
+    ENDIF()
+ENDIF()
 
 CONAN_CMAKE_AUTODETECT(settings)
 
-IF(BUILD_EMSCRIPTEN)
-    CONAN_CMAKE_INSTALL(PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} BUILD missing SETTINGS ${settings} PROFILE ${CMAKE_SOURCE_DIR}/conanfile.emscripten.profile)
-ELSE()
-    CONAN_CMAKE_INSTALL(PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} BUILD missing SETTINGS ${settings})
-ENDIF()
+CONAN_CMAKE_INSTALL(PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} BUILD missing SETTINGS ${settings})
 
-INCLUDE(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-
-INCLUDE(${CMAKE_BINARY_DIR}/conan_paths.cmake)
-
-CONAN_DEFINE_TARGETS()

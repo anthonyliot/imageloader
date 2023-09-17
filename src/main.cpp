@@ -10,7 +10,7 @@
 	#include <emscripten/emscripten.h>
 #endif
 
-#include <ImageLoader.h>
+#include <imageloader.h>
 
 int output_width;
 int output_height;
@@ -28,12 +28,18 @@ extern "C" {
 
 int main(int argc, char *argv[])
 {
-	printf("Library Image Javascript...\n");
+	printf("[INFO] main(): Library Image Loader ...\n");
 	
 	if (argc != 2) {
-		printf("main(): number of argument incorrect : %d\n",argc);
+		printf("[ERROR] main(): Mumber of argument incorrect : %d\n",argc);
 		return 1;
 	}
 
-    return ImageLoader::load(argv[1],output_width,output_height,output_format) ? EXIT_SUCCESS : EXIT_FAILURE;
+	ImageLoader il;
+    if (il.load(argv[1])) {
+		printf("[INFO] main(): Image '%s' loaded successfully (%dx%dx%d)\n", argv[1], il.width(), il.height(), il.format());
+		return EXIT_SUCCESS;
+	}
+	
+	return EXIT_FAILURE;
 }

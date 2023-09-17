@@ -6,7 +6,7 @@
 //
 //
 
-#include <ImageLoader.h>
+#include <imageloader.h>
 #include <setjmp.h>
 
 #define kTempararyName "image.raw"
@@ -28,7 +28,7 @@ class ImageLoaderPNG {
 public:
     
     // load image
-    static int load(const char *name, int& width, int& height, int& format);
+    static int load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format);
 
 private:
     
@@ -50,7 +50,7 @@ void ImageLoaderPNG::file_read_function(png_structp png_ptr,png_bytep ptr,png_si
 
 /*
  */
-int ImageLoaderPNG::load(const char *name, int& width, int& height, int& format) {
+int ImageLoaderPNG::load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format) {
  	printf("ImageLoaderPNG::load\n");
 
     // Open File
@@ -164,7 +164,7 @@ int ImageLoaderPNG::load(const char *name, int& width, int& height, int& format)
     png_destroy_read_struct(&pngPtr, &infoPtr,(png_infopp)0);
 
     // create temporary file for glue code javascript
-    ImageLoader::flip_y((unsigned char *)img_data_decoded,width,height,format);
+    ImageLoader::flip_y((unsigned char *)img_data_decoded, width, height, format);
     
     FILE* raw = fopen(kTempararyName,"wb");
     if (raw) {
@@ -200,7 +200,7 @@ class ImageLoaderJPG {
 public:
     
     // load image
-    static int load(const char *name, int& width, int& height, int& format);
+    static int load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format);
     
 private:
     
@@ -286,7 +286,7 @@ void ImageLoaderJPG::file_skip_input_data(j_decompress_ptr decompress,long num_b
 
 /*
  */
-int ImageLoaderJPG::load(const char *name, int& width, int& height, int& format) {
+int ImageLoaderJPG::load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format) {
  	printf("ImageLoaderJPG::load\n");
     
     // Open File
@@ -383,7 +383,7 @@ class ImageLoaderWEBP {
 public:
     
     // load image
-    static int load(const char *name, int& width, int& height, int& format);
+    static int load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format);
 
 };
 
@@ -395,7 +395,7 @@ ImageLoaderWEBP::ImageLoaderWEBP() {
 
 /*
  */
-int ImageLoaderWEBP::load(const char *name, int& width, int& height, int& format) {
+int ImageLoaderWEBP::load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format) {
  	printf("ImageLoaderWEBP::load\n");
     
     // Open File
@@ -420,7 +420,7 @@ int ImageLoaderWEBP::load(const char *name, int& width, int& height, int& format
     fclose(file);
     
     // Get header info
-    int webpinfo = WebPGetInfo(img_data, data_size, &width, &height);
+    int webpinfo = WebPGetInfo(img_data, data_size, (int32_t*)&width, (int32_t*)&height);
     if (webpinfo == 0) {
         printf("ImageLoaderWEBP::load(): wrong header in \"%s\" file\n",name);
  		delete [] img_data;
@@ -486,7 +486,7 @@ class ImageLoaderTGA {
     public:
 
         // load image
-        static int load(const char *name, int& width, int& height, int& format);
+        static int load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format);
 
     private:
 
@@ -543,7 +543,7 @@ void ImageLoaderTGA::read(unsigned char *data,FILE* file,size_t size,int pixel_s
     }
 }
 
-int ImageLoaderTGA::load(const char * name, int& width, int& height, int& format) {
+int ImageLoaderTGA::load(const char * name, uint32_t& width, uint32_t& height, uint32_t& format) {
     printf("ImageLoaderTGA::load\n");
 
     char* data = NULL;
@@ -634,29 +634,40 @@ int ImageLoaderTGA::load(const char * name, int& width, int& height, int& format
 
 /*
  */
+ImageLoader::ImageLoader():
+_data(),
+_width(0),
+_height(0),
+_format(0)
+{
+	
+}
+
+/*
+ */
 ImageLoader::~ImageLoader() {
 	
 }
 
 /*
  */
-int ImageLoader::load(const char *name, int& width, int& height, int& format) {
+int ImageLoader::load(const char *name) {
 	
     bool success = false;
     if(strstr(name,".jpg") || strstr(name,".JPG")) {
-        success = ImageLoaderJPG::load(name,width,height,format);
+        success = ImageLoaderJPG::load(name, _width, _height, _format);
     }
 
     else if(strstr(name,".png") || strstr(name,".PNG")) {
-        success = ImageLoaderPNG::load(name,width,height,format);
+        success = ImageLoaderPNG::load(name, _width, _height, _format);
     }
     
     else if(strstr(name,".webp") || strstr(name,".WEB¨")) {
-        success = ImageLoaderWEBP::load(name,width,height,format);
+        success = ImageLoaderWEBP::load(name, _width, _height, _format);
     }
     
     else if(strstr(name,".tga") || strstr(name,".TGA¨")) {
-        success = ImageLoaderTGA::load(name,width,height,format);
+        success = ImageLoaderTGA::load(name, _width, _height, _format);
     } 
     
     else {
@@ -664,7 +675,7 @@ int ImageLoader::load(const char *name, int& width, int& height, int& format) {
     }
     
     if (success) {
-        printf("[INFO] ImageLoader::load(): \"%s\" file (%dx%dx%d)\n",name, width, height, format);
+        printf("[INFO] ImageLoader::load(): \"%s\" file (%dx%dx%d)\n", name, _width, _height, _format);
     }
 	
 	return success;
