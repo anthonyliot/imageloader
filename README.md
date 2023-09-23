@@ -15,14 +15,14 @@ You can test the Image Loader JS <a href="https://anthonyliot.github.io/imageloa
 <h2>Build</h2>
 
 1. Standard build (Desktop)
-    1. mkdir build
-    1. cd build
+    1. mkdir build_native
+    1. cd build_native
     1. cmake .. -DCMAKE_BUILD_TYPE=Release
     1. make
 
 1. Emscripten build
-    1. mkdir build
-    1. cd build
+    1. mkdir build_js
+    1. cd build_js
     1. conan install .. -pr:b default -pr:h ../conanfile.emscripten.profile -s build_type=Release -if . -b missing
     1. cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EMSCRIPTEN=ON
     1. make
