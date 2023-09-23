@@ -6,21 +6,45 @@
 //
 //
 
+#include <imageloader.h>
+#include <imageversion.h>
+
 #ifdef USE_EMSCRIPTEN
-	#include <emscripten/emscripten.h>
+#include <emscripten/bind.h>
+#include <emscripten/val.h>
+
+using namespace emscripten;
+
+EMSCRIPTEN_BINDINGS()
+{
+    class_<ImageLoaderVersion>("ImgLoaderVersion")
+        .class_function("version", &ImageLoaderVersion::version)
+        .class_function("version_long", &ImageLoaderVersion::version_long)
+        .class_function("version_hex", &ImageLoaderVersion::version_hex)
+        .class_function("version_major", &ImageLoaderVersion::version_major)
+        .class_function("version_minor", &ImageLoaderVersion::version_minor)
+        .class_function("version_sha", &ImageLoaderVersion::version_sha)
+        .class_function("version_name", &ImageLoaderVersion::version_name)
+        .class_function("version_date", &ImageLoaderVersion::version_date);
+
+    class_<ImageLoader>("ImgLoader")
+        .constructor<>()                                                      
+        .function("load", &ImageLoader::load, allow_raw_pointers())                     
+        .function("width", &ImageLoader::width)
+        .function("height", &ImageLoader::height)
+        .function("format", &ImageLoader::format)	
+        .function("size", &ImageLoader::size)
+        .function("data", optional_override([](ImageLoader& self) {
+            const uint8_t* values = self.data();
+            emscripten::val view { emscripten::typed_memory_view(self.size(), values) };
+            auto result = emscripten::val::global("Uint8Array").new_(self.size());
+            result.call<void>("set", view);
+            return result;
+        }));
+}
 #endif
 
-#include <imageloader.h>
 
-int output_width;
-int output_height;
-int output_format;
-
-extern "C" {
- 	int width() { return output_width; };
- 	int height() { return output_height; };
-    int format() { return output_format; };
-}
 
 /************************/
 /*			MAIN		*/
@@ -28,6 +52,9 @@ extern "C" {
 
 int main(int argc, char *argv[])
 {
+#ifdef USE_EMSCRIPTEN
+    return EXIT_SUCCESS;
+#else
 	printf("[INFO] main(): Library Image Loader ...\n");
 	
 	if (argc != 2) {
@@ -42,4 +69,5 @@ int main(int argc, char *argv[])
 	}
 	
 	return EXIT_FAILURE;
+#endif
 }

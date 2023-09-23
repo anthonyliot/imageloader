@@ -5,15 +5,15 @@
  *
  */
 
-#ifndef __IMAGES_LOADER_VERSION_H__
-#define __IMAGES_LOADER_VERSION_H__
+#ifndef __IMAGE_LOADER_VERSION_H__
+#define __IMAGE_LOADER_VERSION_H__
 
-#define IMAGES_LOADER_VERSION "@VERSION_STR_FULL@"
+#define IMAGE_LOADER_VERSION "@VERSION_STR_FULL@"
 
 ///
 ///
 ///
-class ImagesLoaderVersion {
+class ImageLoaderVersion {
 
 public:
     ///
@@ -57,4 +57,4 @@ public:
     static inline std::string version_date() { return "@TODAY@"; }
 };
 
-#endif /* __IMAGES_LOADER_VERSION_H__ */
+#endif /* __IMAGE_LOADER_VERSION_H__ */

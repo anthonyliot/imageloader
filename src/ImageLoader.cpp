@@ -9,8 +9,6 @@
 #include <imageloader.h>
 #include <setjmp.h>
 
-#define kTempararyName "image.raw"
-
 /******************************************************************************\
  *
  * ImageLoaderPNG
@@ -28,7 +26,7 @@ class ImageLoaderPNG {
 public:
     
     // load image
-    static int load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format);
+    static int load(const char *name, std::vector<uint8_t>& data, uint32_t& width, uint32_t& height, uint32_t& format);
 
 private:
     
@@ -50,13 +48,13 @@ void ImageLoaderPNG::file_read_function(png_structp png_ptr,png_bytep ptr,png_si
 
 /*
  */
-int ImageLoaderPNG::load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format) {
- 	printf("ImageLoaderPNG::load\n");
+int ImageLoaderPNG::load(const char *name, std::vector<uint8_t>& data, uint32_t& width, uint32_t& height, uint32_t& format) {
+ 	printf("[INFO] ImageLoaderPNG::load\n");
 
     // Open File
  	FILE* file = fopen(name,"rb");
  	if (file == 0) {
-        printf("ImageLoaderPNG::load(): can't open file '%s'\n",name);
+        printf("[ERROR] ImageLoaderPNG::load(): can't open file '%s'\n",name);
  		return 0;
  	}
 
@@ -144,7 +142,8 @@ int ImageLoaderPNG::load(const char *name, uint32_t& width, uint32_t& height, ui
     int data_decoded_size = width * height * format;
     
     // raw data image container
-    unsigned char * img_data_decoded = new unsigned char[data_decoded_size];
+    data.resize(data_decoded_size);
+    unsigned char * img_data_decoded = data.data();
     memset(img_data_decoded,0x00,data_decoded_size + 1);
     
 	int stride = width * format;
@@ -165,15 +164,7 @@ int ImageLoaderPNG::load(const char *name, uint32_t& width, uint32_t& height, ui
 
     // create temporary file for glue code javascript
     ImageLoader::flip_y((unsigned char *)img_data_decoded, width, height, format);
-    
-    FILE* raw = fopen(kTempararyName,"wb");
-    if (raw) {
-        fwrite(img_data_decoded,width * height * format ,1 , raw);
-        fclose(raw);
-    }
-     
-    delete [] img_data_decoded;
-    
+        
     fclose(file);
     
 	return 1;
@@ -200,7 +191,7 @@ class ImageLoaderJPG {
 public:
     
     // load image
-    static int load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format);
+    static int load(const char *name, std::vector<uint8_t>& data, uint32_t& width, uint32_t& height, uint32_t& format);
     
 private:
     
@@ -242,7 +233,7 @@ void ImageLoaderJPG::error_exit(j_common_ptr common) {
 void ImageLoaderJPG::output_message(j_common_ptr common) {
 	char buffer[JMSG_LENGTH_MAX];
 	(*common->err->format_message)(common,buffer);
-	printf("ImageLoaderJPG::output_message(): %s\n",buffer);
+	printf("[INFO] ImageLoaderJPG::output_message(): %s\n",buffer);
 }
 
 /*
@@ -286,13 +277,13 @@ void ImageLoaderJPG::file_skip_input_data(j_decompress_ptr decompress,long num_b
 
 /*
  */
-int ImageLoaderJPG::load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format) {
- 	printf("ImageLoaderJPG::load\n");
+int ImageLoaderJPG::load(const char *name, std::vector<uint8_t>& data, uint32_t& width, uint32_t& height, uint32_t& format) {
+ 	printf("[INFO] ImageLoaderJPG::load\n");
     
     // Open File
  	FILE* file = fopen(name,"rb");
  	if (file == 0) {
-        printf("ImageLoaderJPG::load(): can't open file '%s'\n",name);
+        printf("[ERROR] ImageLoaderJPG::load(): can't open file '%s'\n",name);
  		return 0;
  	}
     
@@ -308,7 +299,7 @@ int ImageLoaderJPG::load(const char *name, uint32_t& width, uint32_t& height, ui
 	error.pub.error_exit = error_exit;
 	error.pub.output_message = output_message;
 	if(setjmp(error.setjmp_buffer)) {
-		printf("ImageLoaderJPG::load(): can't load \"%s\" file\n",name);
+		printf("[ERROR] ImageLoaderJPG::load(): can't load \"%s\" file\n",name);
 		jpeg_destroy_decompress(&decompress);
 		fclose(file);
 		return 0;
@@ -338,7 +329,8 @@ int ImageLoaderJPG::load(const char *name, uint32_t& width, uint32_t& height, ui
     int data_decoded_size = width * height * format;
     
     // raw data image container
-    unsigned char * img_data_decoded = new unsigned char[data_decoded_size];
+    data.resize(data_decoded_size);
+    unsigned char * img_data_decoded = data.data();
     memset(img_data_decoded,0x00,data_decoded_size + 1);
     
 	int stride = decompress.output_width * decompress.output_components;
@@ -351,15 +343,7 @@ int ImageLoaderJPG::load(const char *name, uint32_t& width, uint32_t& height, ui
 	
 	jpeg_finish_decompress(&decompress);
 	jpeg_destroy_decompress(&decompress);
-	   
-    // create temporary file for glue code javascript
-    FILE* raw = fopen(kTempararyName,"wb");
-    if (raw) {
-        fwrite(img_data_decoded,data_decoded_size ,1 , raw);
-        fclose(raw);
-    }
 
-    delete [] img_data_decoded;
 	fclose(file);
     
 	return 1;
@@ -383,7 +367,7 @@ class ImageLoaderWEBP {
 public:
     
     // load image
-    static int load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format);
+    static int load(const char *name, std::vector<uint8_t>& data, uint32_t& width, uint32_t& height, uint32_t& format);
 
 };
 
@@ -395,13 +379,13 @@ ImageLoaderWEBP::ImageLoaderWEBP() {
 
 /*
  */
-int ImageLoaderWEBP::load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format) {
- 	printf("ImageLoaderWEBP::load\n");
+int ImageLoaderWEBP::load(const char *name, std::vector<uint8_t>& data, uint32_t& width, uint32_t& height, uint32_t& format) {
+ 	printf("[INFO] ImageLoaderWEBP::load\n");
     
     // Open File
  	FILE* file = fopen(name,"rb");
  	if (file == 0) {
-        printf("ImageLoaderWEBP::load(): can't open file '%s'\n",name);
+        printf("[ERROR] ImageLoaderWEBP::load(): can't open file '%s'\n",name);
  		return 0;
  	}
     
@@ -422,7 +406,7 @@ int ImageLoaderWEBP::load(const char *name, uint32_t& width, uint32_t& height, u
     // Get header info
     int webpinfo = WebPGetInfo(img_data, data_size, (int32_t*)&width, (int32_t*)&height);
     if (webpinfo == 0) {
-        printf("ImageLoaderWEBP::load(): wrong header in \"%s\" file\n",name);
+        printf("[ERROR] ImageLoaderWEBP::load(): wrong header in \"%s\" file\n",name);
  		delete [] img_data;
  		return 0;
     }
@@ -432,7 +416,7 @@ int ImageLoaderWEBP::load(const char *name, uint32_t& width, uint32_t& height, u
     VP8StatusCode status = WebPGetFeatures(img_data, data_size, &features);
 
     if (status != VP8_STATUS_OK) {
-        printf("ImageLoaderWEBP::load(): bad bitstream in \"%s\" file, error:\"%d\"\n",name,status);
+        printf("[ERROR] ImageLoaderWEBP::load(): bad bitstream in \"%s\" file, error:\"%d\"\n",name,status);
  		delete [] img_data;
  		return 0;
     }
@@ -442,35 +426,26 @@ int ImageLoaderWEBP::load(const char *name, uint32_t& width, uint32_t& height, u
     int data_decoded_size = width * height * format;
 
     // raw data image container
-    unsigned char * img_data_decoded = new unsigned char[data_decoded_size];
+    data.resize(data_decoded_size);
+    unsigned char * img_data_decoded = data.data();
     memset(img_data_decoded,0x00,data_decoded_size);
 
     // decode image inside container (RGB and RGBA)
     if (format == 3 ) {
         if ( WebPDecodeRGBInto(img_data, data_size, img_data_decoded, data_decoded_size, width * format) == NULL ) {
-            printf("ImageLoaderWEBP::load(): can't decode RGB \"%s\" file\n",name);
+            printf("[ERROR] ImageLoaderWEBP::load(): can't decode RGB \"%s\" file\n",name);
             delete [] img_data;
-            delete [] img_data_decoded;
             return 0;
         }
     } else {
         if ( WebPDecodeRGBAInto(img_data, data_size, img_data_decoded, data_decoded_size, width * format) == NULL ) {
-            printf("ImageLoaderWEBP::load(): can't decode RGBA \"%s\" file\n",name);
+            printf("[ERROR] ImageLoaderWEBP::load(): can't decode RGBA \"%s\" file\n",name);
             delete [] img_data;
-            delete [] img_data_decoded;
            return 0;
         }
     }
-    
-    // create temporary file for glue code javascript
-    FILE* raw = fopen(kTempararyName,"wb");
-    if (raw) {
-        fwrite(img_data_decoded,data_decoded_size ,1 , raw);
-        fclose(raw);
-    }
-    
+
     delete [] img_data;
-    delete [] img_data_decoded;
     
 	return 1;
 }
@@ -486,7 +461,7 @@ class ImageLoaderTGA {
     public:
 
         // load image
-        static int load(const char *name, uint32_t& width, uint32_t& height, uint32_t& format);
+        static int load(const char *name, std::vector<uint8_t>& data, uint32_t& width, uint32_t& height, uint32_t& format);
 
     private:
 
@@ -543,14 +518,12 @@ void ImageLoaderTGA::read(unsigned char *data,FILE* file,size_t size,int pixel_s
     }
 }
 
-int ImageLoaderTGA::load(const char * name, uint32_t& width, uint32_t& height, uint32_t& format) {
-    printf("ImageLoaderTGA::load\n");
-
-    char* data = NULL;
+int ImageLoaderTGA::load(const char * name, std::vector<uint8_t>& data, uint32_t& width, uint32_t& height, uint32_t& format) {
+    printf("[INFO] ImageLoaderTGA::load\n");
 
     FILE* file = fopen(name,"rb");
     if (file == 0) {
-        printf("ImageLoaderTGA::load(): can't open file '%s'\n",name);
+        printf("[ERROR] ImageLoaderTGA::load(): can't open file '%s'\n",name);
         return 0;
     }
 
@@ -594,7 +567,8 @@ int ImageLoaderTGA::load(const char * name, uint32_t& width, uint32_t& height, u
     int data_decoded_size = width * height * format;
     
     // raw data image container
-    unsigned char * img_data_decoded = new unsigned char[data_decoded_size];
+    data.resize(data_decoded_size);
+    unsigned char * img_data_decoded = data.data();
     memset(img_data_decoded,0x00,data_decoded_size);
 
     size_t size = header.width * header.height;
@@ -609,18 +583,8 @@ int ImageLoaderTGA::load(const char * name, uint32_t& width, uint32_t& height, u
         ImageLoader::flip_y((unsigned char *)img_data_decoded,header.width,header.height,format);
     }
 
-    //close file
+    // close file
     fclose(file);
-
-    /*** SECOND VERSION WORK ***/
-    FILE* raw = fopen(kTempararyName,"wb");
-
-    if (raw) {
-        fwrite(img_data_decoded,data_decoded_size ,1 , raw);
-        fclose(raw);
-    }
-
-    delete [] img_data_decoded;
 
     return 1;
 }
@@ -651,41 +615,43 @@ ImageLoader::~ImageLoader() {
 
 /*
  */
-int ImageLoader::load(const char *name) {
-	
+bool ImageLoader::load(const std::string& name) {
+    
+    const char* c_name = name.c_str();
     bool success = false;
-    if(strstr(name,".jpg") || strstr(name,".JPG")) {
-        success = ImageLoaderJPG::load(name, _width, _height, _format);
+
+    if(strstr(c_name,".jpg") || strstr(c_name,".JPG")) {
+        success = ImageLoaderJPG::load(c_name, _data, _width, _height, _format);
     }
 
-    else if(strstr(name,".png") || strstr(name,".PNG")) {
-        success = ImageLoaderPNG::load(name, _width, _height, _format);
+    else if(strstr(c_name,".png") || strstr(c_name,".PNG")) {
+        success = ImageLoaderPNG::load(c_name, _data, _width, _height, _format);
     }
     
-    else if(strstr(name,".webp") || strstr(name,".WEB¨")) {
-        success = ImageLoaderWEBP::load(name, _width, _height, _format);
+    else if(strstr(c_name,".webp") || strstr(c_name,".WEB¨")) {
+        success = ImageLoaderWEBP::load(c_name, _data, _width, _height, _format);
     }
     
-    else if(strstr(name,".tga") || strstr(name,".TGA¨")) {
-        success = ImageLoaderTGA::load(name, _width, _height, _format);
+    else if(strstr(c_name,".tga") || strstr(c_name,".TGA¨")) {
+        success = ImageLoaderTGA::load(c_name, _data, _width, _height, _format);
     } 
     
     else {
-        printf("[ERROR] ImageLoader::load(): unknown format of \"%s\" file\n",name);
+        printf("[ERROR] ImageLoader::load(): unknown format of \"%s\" file\n",c_name);
     }
     
     if (success) {
-        printf("[INFO] ImageLoader::load(): \"%s\" file (%dx%dx%d)\n", name, _width, _height, _format);
+        printf("[INFO] ImageLoader::load(): \"%s\" file (%dx%dx%d)\n", c_name, _width, _height, _format);
     }
 	
 	return success;
 }
 
 
-int ImageLoader::swap(unsigned char *dest,size_t size,int components,int channel_0,int channel_1) {
- 	unsigned char *d = (unsigned char *)dest;
+int ImageLoader::swap(uint8_t *dest,size_t size,int components,int channel_0,int channel_1) {
+ 	uint8_t *d = (uint8_t *)dest;
  	for(size_t i = 0; i < size; i += components) {
- 		unsigned char c = d[channel_0];
+ 		uint8_t c = d[channel_0];
  		d[channel_0] = d[channel_1];
  		d[channel_1] = c;
  		d += components;
@@ -694,12 +660,12 @@ int ImageLoader::swap(unsigned char *dest,size_t size,int components,int channel
 }
 
 
-void ImageLoader::flip_y(unsigned char *dest,int width,int height,int components) {
+void ImageLoader::flip_y(uint8_t *dest,int width,int height,int components) {
     for(int y = 0; y < height / 2; y++) {
-        unsigned char *s = &((unsigned char *)dest)[width * y * components];
- 		unsigned char *d = &((unsigned char *)dest)[width * (height - y - 1) * components];
+        uint8_t *s = &((uint8_t *)dest)[width * y * components];
+ 		uint8_t *d = &((uint8_t *)dest)[width * (height - y - 1) * components];
  		for(int x = 0; x < width * components; x++) {
- 			unsigned char c = *d;
+ 			uint8_t c = *d;
  			*d++ = *s;
  			*s++ = c;
  		}

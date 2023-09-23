@@ -25,16 +25,19 @@ public:
     virtual ~ImageLoader();
     
     // load image
-    int load(const char *name);
+    bool load(const std::string& name);
 
     // swap image
-    static int swap(unsigned char *dest, size_t size, int components, int channel_0, int channel_1);
+    static int swap(uint8_t *dest, size_t size, int components, int channel_0, int channel_1);
 
     // flip horizontal
-    static void flip_y(unsigned char *dest, int width, int height, int components);
+    static void flip_y(uint8_t *dest, int width, int height, int components);
 
     // Access to the data pointer
     inline const uint8_t *data() const { return _data.data(); }
+
+    // Return the size of the image
+    inline uint32_t size() const { return _data.size(); }
 
     // Access to the image width
     inline uint32_t width() const { return _width; }
